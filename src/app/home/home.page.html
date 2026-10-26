@@ -1,0 +1,238 @@
+<ion-content [fullscreen]="true" [scrollY]="false">
+  <div #mapEl class="map"></div>
+
+  <!-- ================= STATE 1: IDLE (Search & Saved Places) ================= -->
+  @if (uiState() === 'idle') {
+    <div class="search-container">
+      <div class="search-bar">
+        <ion-icon name="search" class="search-icon"></ion-icon>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (input)="onSearchInput()"
+          (keydown.enter)="onSearchEnter()"
+          placeholder="Where to? (e.g. Masjid Sendayan, KLCC, Pekan)"
+        />
+        @if (searchQuery) {
+          <button class="clear-btn" (click)="searchQuery = ''; searchResults.set([]); isSearching.set(false)">
+            <ion-icon name="close-circle"></ion-icon>
+          </button>
+        }
+      </div>
+
+      <!-- Quick Destination Chips (Home / Work) -->
+      <div class="chips-row">
+        @let homePlace = savedPlaces().find(p => p.label.toLowerCase() === 'home');
+        @if (homePlace) {
+          <div class="place-chip" (click)="handleSavedPlaceClick(homePlace)">
+            <ion-icon name="home"></ion-icon> Home
+          </div>
+        } @else {
+          <div class="place-chip add-chip" (click)="promptAddSavedPlace('Home')">
+            <ion-icon name="add"></ion-icon> Set Home
+          </div>
+        }
+
+        @let workPlace = savedPlaces().find(p => p.label.toLowerCase() === 'work');
+        @if (workPlace) {
+          <div class="place-chip" (click)="handleSavedPlaceClick(workPlace)">
+            <ion-icon name="briefcase"></ion-icon> Work
+          </div>
+        } @else {
+          <div class="place-chip add-chip" (click)="promptAddSavedPlace('Work')">
+            <ion-icon name="add"></ion-icon> Set Work
+          </div>
+        }
+      </div>
+
+      <!-- Auto-complete Search Results Dropdown -->
+      @if (searchResults().length > 0) {
+        <div class="search-results">
+          @for (res of searchResults(); track res.name) {
+            <div class="result-item" (click)="selectSearchResult(res)">
+              <ion-icon name="navigate" class="result-icon"></ion-icon>
+              <div class="result-text">{{ res.name }}</div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ================= STATE 2: ROUTE PREVIEW (Google Maps Screenshot 1) ================= -->
+  @if (uiState() === 'preview' && activeRoute(); as r) {
+    <!-- Top Route Origin & Destination Card -->
+    <div class="preview-top-card">
+      <button class="back-circle-btn" (click)="cancelRoute()" aria-label="Back">
+        <ion-icon name="arrow-back"></ion-icon>
+      </button>
+
+      <div class="waypoints-inputs">
+        <div class="waypoint-row">
+          <span class="dot-origin"></span>
+          <span class="waypoint-text">Your location</span>
+        </div>
+        <div class="divider-line"></div>
+        <div class="waypoint-row">
+          <span class="pin-destination">📍</span>
+          <span class="waypoint-text dest">{{ destinationLabel() }}</span>
+        </div>
+      </div>
+
+      <div class="top-card-actions">
+        <button class="icon-action-btn"><ion-icon name="ellipsis-vertical"></ion-icon></button>
+        <button class="icon-action-btn"><ion-icon name="swap-vertical"></ion-icon></button>
+      </div>
+    </div>
+
+    <!-- Bottom Route Summary Sheet (Google Maps "Drive" sheet) -->
+    <div class="preview-bottom-sheet">
+      <div class="sheet-drag-handle"></div>
+
+      <div class="sheet-header">
+        <span class="sheet-title">Drive</span>
+        <div class="header-actions">
+          <button class="circle-tool-btn" (click)="cancelRoute()"><ion-icon name="close-circle"></ion-icon></button>
+        </div>
+      </div>
+
+      <!-- Mode selector (Car, Motorbike, Transit) -->
+      <div class="transport-modes">
+        <div class="mode-tab active">
+          <ion-icon name="car"></ion-icon>
+          <span>{{ formatDuration(r.duration) }}</span>
+        </div>
+      </div>
+
+      <!-- Duration, Distance & Petrol Highlight -->
+      <div class="duration-highlight">
+        <span class="duration-green">{{ formatDuration(r.duration) }}</span>
+        <span class="distance-muted">({{ (r.distance / 1000).toFixed(0) }} km)</span>
+      </div>
+
+      <div class="traffic-tag">
+        <span>Fastest route, the usual traffic</span>
+      </div>
+      <div class="petrol-tag">
+        <ion-icon name="leaf"></ion-icon>
+        <span>Saves petrol & no tolls</span>
+      </div>
+
+      <!-- Primary Action Buttons (Big Green Start, Add Stops, Share) -->
+      <div class="sheet-action-row">
+        <button class="start-nav-btn" (click)="startNavigation()">
+          <ion-icon name="navigate"></ion-icon>
+          <span>Start</span>
+        </button>
+
+        <button class="secondary-btn" (click)="say('Multi-stop routing coming in next update')">
+          <ion-icon name="add"></ion-icon>
+          <span>Add stops</span>
+        </button>
+
+        <button class="secondary-btn" (click)="say('Sharing trip route')">
+          <ion-icon name="share-social"></ion-icon>
+          <span>Share</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ================= STATE 3: ACTIVE NAVIGATION (Google Maps Screenshot 2) ================= -->
+  @if (uiState() === 'navigating') {
+    <!-- Google Maps Dark Teal Top Maneuver Banner -->
+    @if (banner(); as b) {
+      <div class="gmaps-nav-banner">
+        <div class="banner-top-row">
+          <div class="turn-arrow-box">
+            <span class="arrow-symbol">⬆</span>
+            <span class="maneuver-dist">{{ b.meters >= 1000 ? (b.meters / 1000).toFixed(1) + ' km' : b.meters + ' m' }}</span>
+          </div>
+          <div class="street-target-box">
+            <div class="street-name">{{ b.text }}</div>
+          </div>
+        </div>
+
+        @if (nextBanner(); as nb) {
+          <div class="banner-then-sub">
+            <span class="then-label">Then</span>
+            <span class="then-arrow">↰</span>
+            <span class="then-text">{{ nb.text }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Street Name Pill at bottom of screen -->
+    @if (currentStreetName()) {
+      <div class="street-name-pill">
+        {{ currentStreetName() }}
+      </div>
+    }
+
+    <!-- Live Cockpit Speedometer Floating Circle -->
+    <div class="speed-float-circle">
+      <div class="speed-val">{{ eta()?.speedKmh || '--' }}</div>
+      <div class="speed-lbl">km/h</div>
+    </div>
+
+    <!-- Right Side Utility Action Buttons (Compass, Audio Mute, Recenter) -->
+    <div class="nav-side-buttons">
+      <button class="side-circle-btn" (click)="recenter()" aria-label="Recenter"><ion-icon name="locate"></ion-icon></button>
+      <button class="side-circle-btn" (click)="toggleVoice()" aria-label="Mute Voice">
+        <ion-icon [name]="voice.enabled ? 'volume-high' : 'volume-mute'"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Google Maps Bottom Nav Card (Time, KM, Arrival Time & Close) -->
+    @if (eta(); as e) {
+      <div class="gmaps-bottom-bar">
+        <button class="close-x-btn" (click)="cancelRoute()" aria-label="Exit Navigation">
+          <ion-icon name="close-circle"></ion-icon>
+        </button>
+
+        <div class="nav-metrics">
+          <div class="metric-time">
+            <span class="time-green">{{ formatDuration(e.min * 60) }}</span>
+            <ion-icon name="leaf" class="leaf-icon"></ion-icon>
+          </div>
+          <div class="metric-sub">
+            {{ e.km.toFixed(0) }} km · {{ e.arrivalTime }}
+          </div>
+        </div>
+
+        <button class="sparkle-btn" (click)="say('Route is optimized')">
+          <div class="sparkle-circle">✦</div>
+        </button>
+      </div>
+    }
+  }
+
+  <!-- ================= FLOATING ACTION BUTTONS (Map Controls) ================= -->
+  <!-- Left Side: Go to Current Location & Clear/Hide Hazard Signs -->
+  <div class="map-controls-left">
+    <!-- Recenter to Current Location Button (Google Maps blue target icon) -->
+    <button class="map-action-btn locate-btn" (click)="recenterToCurrentLocation()" aria-label="Current Location">
+      <ion-icon name="locate"></ion-icon>
+    </button>
+
+    <!-- Remove / Clear All Hazard Signs Button (Dedicated Trash Icon) -->
+    <button
+      class="map-action-btn trash-btn"
+      (click)="clearAllHazards()"
+      aria-label="Clear All Hazard Signs"
+      title="Clear all hazard signs from map"
+    >
+      <ion-icon name="trash"></ion-icon>
+    </button>
+  </div>
+
+  <!-- Right Side: Waze/Google Maps Incident Reporting Button (available in idle and navigating) -->
+  @if (uiState() !== 'preview') {
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="report-fab">
+      <ion-fab-button color="danger" (click)="openReportSheet()" aria-label="Report hazard">
+        <ion-icon name="alert-circle"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+  }
+</ion-content>

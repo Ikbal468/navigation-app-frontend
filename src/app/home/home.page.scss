@@ -1,0 +1,702 @@
+.map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ================= STATE 1: IDLE SEARCH BAR ================= */
+.search-container {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 14px);
+  left: 14px;
+  right: 14px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 12px 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+
+  .search-icon {
+    font-size: 22px;
+    color: #5f6368;
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #202124;
+    font-size: 16px;
+    font-weight: 500;
+
+    &::placeholder {
+      color: #70757a;
+    }
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: none;
+    color: #70757a;
+    font-size: 20px;
+    display: flex;
+    padding: 0;
+  }
+}
+
+.chips-row {
+  display: flex;
+  gap: 8px;
+
+  .place-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    color: #3c4043;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+
+    ion-icon {
+      color: #1a73e8;
+      font-size: 16px;
+    }
+
+    &.add-chip {
+      color: #70757a;
+      ion-icon {
+        color: #70757a;
+      }
+    }
+  }
+}
+
+.search-results {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  max-height: 250px;
+  overflow-y: auto;
+
+  .result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f3f4;
+    cursor: pointer;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .result-icon {
+      font-size: 18px;
+      color: #1a73e8;
+    }
+
+    .result-text {
+      color: #202124;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+/* ================= STATE 2: GOOGLE MAPS PREVIEW SCREEN ================= */
+.preview-top-card {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 12px;
+  right: 12px;
+  z-index: 15;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .back-circle-btn {
+    background: transparent;
+    border: none;
+    color: #3c4043;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .waypoints-inputs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .waypoint-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .dot-origin {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #1a73e8;
+        border: 2px solid #ffffff;
+        box-shadow: 0 0 0 2px #1a73e8;
+      }
+
+      .pin-destination {
+        font-size: 14px;
+      }
+
+      .waypoint-text {
+        font-size: 14px;
+        color: #1a73e8;
+        font-weight: 500;
+
+        &.dest {
+          color: #202124;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .divider-line {
+      height: 1px;
+      background: #dadce0;
+      margin-left: 20px;
+    }
+  }
+
+  .top-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .icon-action-btn {
+      background: transparent;
+      border: none;
+      color: #5f6368;
+      font-size: 20px;
+      padding: 6px;
+    }
+  }
+}
+
+.preview-bottom-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  background: #ffffff;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 12px 20px 24px 20px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+
+  .sheet-drag-handle {
+    width: 36px;
+    height: 4px;
+    background: #dadce0;
+    border-radius: 2px;
+    margin: 0 auto 10px auto;
+  }
+
+  .sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .sheet-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #202124;
+    }
+
+    .header-actions {
+      .circle-tool-btn {
+        background: transparent;
+        border: none;
+        font-size: 22px;
+        color: #5f6368;
+      }
+    }
+  }
+
+  .transport-modes {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+
+    .mode-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #137333;
+      background: #e6f4ea;
+      border-bottom: 2px solid #137333;
+    }
+  }
+
+  .duration-highlight {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+
+    .duration-green {
+      font-size: 28px;
+      font-weight: 700;
+      color: #137333; // Exact Google Maps dark green ETA
+      letter-spacing: -0.5px;
+    }
+
+    .distance-muted {
+      font-size: 18px;
+      color: #5f6368;
+      font-weight: 500;
+    }
+  }
+
+  .traffic-tag {
+    font-size: 14px;
+    color: #5f6368;
+    margin-top: 2px;
+  }
+
+  .petrol-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #137333;
+    font-weight: 600;
+    margin-top: 4px;
+    margin-bottom: 18px;
+
+    ion-icon {
+      font-size: 15px;
+    }
+  }
+
+  .sheet-action-row {
+    display: flex;
+    gap: 10px;
+
+    .start-nav-btn {
+      flex: 1.2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #00755e; // Google Maps dark teal Start button
+      color: #ffffff;
+      border: none;
+      border-radius: 24px;
+      padding: 12px 18px;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 117, 94, 0.35);
+      cursor: pointer;
+
+      ion-icon {
+        font-size: 18px;
+      }
+    }
+
+    .secondary-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #e8f0fe;
+      color: #1967d2;
+      border: none;
+      border-radius: 24px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+
+      ion-icon {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+/* ================= STATE 3: GOOGLE MAPS ACTIVE DRIVING COCKPIT ================= */
+.gmaps-nav-banner {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 10px);
+  left: 10px;
+  right: 10px;
+  z-index: 20;
+  background: #005a54; // Exact Google Maps dark teal header
+  color: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  .banner-top-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    gap: 16px;
+
+    .turn-arrow-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 65px;
+
+      .arrow-symbol {
+        font-size: 34px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .maneuver-dist {
+        font-size: 13px;
+        font-weight: 800;
+        color: #80cbc4;
+        margin-top: 4px;
+        white-space: nowrap;
+      }
+    }
+
+    .street-target-box {
+      flex: 1;
+
+      .street-name {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+    }
+  }
+
+  .banner-then-sub {
+    background: #00433e;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+
+    .then-label {
+      opacity: 0.85;
+    }
+
+    .then-arrow {
+      font-size: 18px;
+    }
+
+    .then-text {
+      font-weight: 500;
+    }
+  }
+}
+
+.street-name-pill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom) + 115px);
+  z-index: 15;
+  background: #ffffff;
+  color: #1e30f3;
+  border: 1px solid #dadce0;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+
+/* Floating Action Map Controls (Recenter & Remove Signs) */
+.map-controls-left {
+  position: absolute;
+  left: 14px;
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .map-action-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #dadce0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #3c4043;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+
+    &:active {
+      transform: scale(0.92);
+    }
+
+    &.locate-btn {
+      color: #1a73e8;
+      font-size: 26px;
+    }
+
+    &.trash-btn {
+      color: #ea4335;
+      font-size: 24px;
+
+      &:hover,
+      &:active {
+        background: #fce8e6;
+        color: #d93025;
+      }
+    }
+  }
+}
+
+.speed-float-circle {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom) + 100px);
+  left: 14px;
+  z-index: 15;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dadce0;
+
+  .speed-val {
+    font-size: 18px;
+    font-weight: 800;
+    color: #202124;
+    line-height: 1;
+  }
+
+  .speed-lbl {
+    font-size: 10px;
+    font-weight: 600;
+    color: #5f6368;
+  }
+}
+
+.nav-side-buttons {
+  position: absolute;
+  right: 14px;
+  bottom: calc(env(safe-area-inset-bottom) + 100px);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .side-circle-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #dadce0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #3c4043;
+    cursor: pointer;
+  }
+}
+
+.gmaps-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #ffffff;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 16px 20px calc(env(safe-area-inset-bottom) + 14px) 20px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .close-x-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #f1f3f4;
+    border: none;
+    color: #5f6368;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .nav-metrics {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .metric-time {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .time-green {
+        font-size: 26px;
+        font-weight: 800;
+        color: #137333; // Exact Google Maps ETA green
+      }
+
+      .leaf-icon {
+        color: #137333;
+        font-size: 18px;
+      }
+    }
+
+    .metric-sub {
+      font-size: 14px;
+      color: #5f6368;
+      font-weight: 600;
+    }
+  }
+
+  .sparkle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #e8f0fe;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    .sparkle-circle {
+      color: #1a73e8;
+      font-size: 22px;
+    }
+  }
+}
+
+/* ================= MAP ELEMENTS & CALLOUTS ================= */
+:host ::ng-deep {
+  .me-puck {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #1a73e8;
+    border: 4px solid #ffffff;
+    box-shadow: 0 0 0 8px rgba(26, 115, 232, 0.25);
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: -14px;
+      left: 5px;
+      border: 6px solid transparent;
+      border-bottom: 12px solid #1a73e8;
+      border-top: 0;
+    }
+  }
+
+  .dest-pin {
+    font-size: 32px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+  }
+
+  /* Route ETA Callout Bubble on Map (Like "3 hr 55 min - No tolls" in Screenshot) */
+  .route-bubble {
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    text-align: center;
+    white-space: nowrap;
+
+    &.bubble-primary {
+      background: #0d47a1; // Dark blue primary route badge
+      color: #ffffff;
+      .bubble-time {
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .bubble-sub {
+        font-size: 11px;
+        opacity: 0.9;
+      }
+    }
+
+    &.bubble-alt {
+      background: #ffffff;
+      color: #202124;
+      border: 1px solid #dadce0;
+      .bubble-time {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .bubble-sub {
+        font-size: 11px;
+        color: #5f6368;
+      }
+    }
+  }
+
+  .incident {
+    font-size: 24px;
+    cursor: pointer;
+    background: #ffffff;
+    border-radius: 50%;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  }
+}
